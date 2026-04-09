@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cost of Doing Nothing — dbt Labs</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #f5f4f1;
+  min-height: 100vh;
+  color: #1a1916;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+.page { width: 100%; max-width: 520px; margin: 0 auto; }
+
+.page-header { margin-bottom: 1.75rem; }
+.page-title { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
+.page-sub { font-size: 13px; color: #7a7870; line-height: 1.5; }
+
+/* ── TABS ── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: #ebe9e4;
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 1.5rem;
+}
+.tab {
+  flex: 1;
+  padding: 8px 6px;
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: #7a7870;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  line-height: 1.3;
+}
+.tab:hover { color: #3a3830; background: rgba(255,255,255,0.5); }
+.tab.active { background: #fff; color: #1a1916; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+/* ── RESULT BAR ── */
+.result-bar {
+  background: #1a1916;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.result-label { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.4); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 4px; }
+.result-total { font-size: 34px; font-weight: 600; color: #fff; letter-spacing: -0.03em; line-height: 1; }
+.result-mo { font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 4px; }
+.result-right { display: flex; flex-direction: column; gap: 5px; text-align: right; flex-shrink: 0; }
+.result-line { font-size: 12px; color: rgba(255,255,255,0.4); display: flex; gap: 10px; justify-content: flex-end; align-items: baseline; }
+.result-line-val { font-weight: 500; color: rgba(255,255,255,0.72); min-width: 52px; text-align: right; font-size: 13px; }
+
+/* ── PANELS ── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── FIELDS ── */
+.section { margin-bottom: 1.25rem; }
+.section-label { font-size: 11px; font-weight: 500; color: #9a9890; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 0.6rem; }
+
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.field {
+  background: #fff;
+  border: 1px solid #e4e2db;
+  border-radius: 8px;
+  padding: 11px 13px;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.field:focus-within { border-color: #a8a298; box-shadow: 0 0 0 3px rgba(160,152,140,0.12); }
+.field label { display: block; font-size: 11px; font-weight: 500; color: #6a6860; margin-bottom: 5px; line-height: 1.35; }
+.field-input-row { display: flex; align-items: center; gap: 4px; }
+.field-pfx, .field-sfx { font-size: 13px; color: #9a9890; flex-shrink: 0; }
+.field input {
+  border: none; outline: none; background: transparent;
+  font-family: inherit; font-size: 15px; font-weight: 500;
+  color: #1a1916; width: 100%; min-width: 0; padding: 0;
+}
+.field input::-webkit-inner-spin-button { opacity: 0.35; }
+
+/* ── TOGGLE ── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+.toggle-label { font-size: 12px; color: #6a6860; font-weight: 500; }
+.toggle {
+  display: flex;
+  background: #ebe9e4;
+  border-radius: 6px;
+  padding: 3px;
+  gap: 3px;
+}
+.toggle-opt {
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: #7a7870;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.toggle-opt.active { background: #fff; color: #1a1916; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+/* ── ASSUMPTION NOTE ── */
+.assumption {
+  font-size: 11px;
+  color: #9a9890;
+  line-height: 1.55;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e4e2db;
+}
+.assumption strong { color: #6a6860; font-weight: 500; }
+
+/* ── RESET ── */
+.reset-btn {
+  display: block; width: 100%; padding: 8px;
+  background: transparent; color: #b0ae a8; border: none;
+  font-family: inherit; font-size: 12px; cursor: pointer;
+  margin-top: 1rem; transition: color 0.1s; text-align: center;
+  color: #aaa8a0;
+}
+.reset-btn:hover { color: #4a4840; }
+
+@media (max-width: 440px) {
+  .field-grid { grid-template-columns: 1fr; }
+  .result-bar { flex-direction: column; align-items: flex-start; gap: 0.65rem; }
+  .result-right { text-align: left; }
+  .result-line { justify-content: flex-start; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-header">
+    <div class="page-title">Cost of doing nothing</div>
+    <div class="page-sub">Fill in what you know. Rough estimate — meant for early discovery.</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('core')">dbt Core</button>
+    <button class="tab" onclick="switchTab('sproc')">Stored Procs</button>
+    <button class="tab" onclick="switchTab('teams')">Teams / Starter</button>
+  </div>
+
+  <div class="result-bar" id="result-single">
+    <div>
+      <div class="result-label">Annual cost of inaction</div>
+      <div class="result-total" id="r_total">$0</div>
+      <div class="result-mo" id="r_mo">$0 / month</div>
+    </div>
+    <div class="result-right" id="r_breakdown"></div>
+  </div>
+
+  <!-- ══ dbt Core ══ -->
+  <div class="panel active" id="panel-core">
+    <div class="section">
+      <div class="section-label">Team</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Data engineers on team</label>
+          <div class="field-input-row">
+            <input type="number" id="c_eng" value="5" min="1" oninput="calcCore()">
+            <span class="field-sfx">people</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Avg eng salary / yr</label>
+          <div class="field-input-row">
+            <span class="field-pfx">$</span>
+            <input type="number" id="c_cost" value="140000" min="0" oninput="calcCore()">
+          </div>
+        </div>
+        <div class="field">
+          <label>Total hrs/week spent on pipeline fires (across team)</label>
+          <div class="field-input-row">
+            <input type="number" id="c_fire_hrs" value="8" min="0" oninput="calcCore()">
+            <span class="field-sfx">hrs/wk</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Total hrs/week managing infra &amp; CI manually (across team)</label>
+          <div class="field-input-row">
+            <input type="number" id="c_infra_hrs" value="6" min="0" oninput="calcCore()">
+            <span class="field-sfx">hrs/wk</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Compute &amp; quality</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Monthly warehouse spend</label>
+          <div class="field-input-row">
+            <span class="field-pfx">$</span>
+            <input type="number" id="c_compute" value="15000" min="0" oninput="calcCore()">
+            <span class="field-sfx">/mo</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Hrs of stakeholder-facing downtime / mo</label>
+          <div class="field-input-row">
+            <input type="number" id="c_incidents" value="8" min="0" oninput="calcCore()">
+            <span class="field-sfx">hrs/mo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="assumption" id="core-assumptions"></div>
+    <button class="reset-btn" onclick="resetCore()">Reset</button>
+  </div>
+
+  <!-- ══ Stored Procs ══ -->
+  <div class="panel" id="panel-sproc">
+    <div class="section">
+      <div class="section-label">Team</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Engineers maintaining transformations</label>
+          <div class="field-input-row">
+            <input type="number" id="s_eng" value="3" min="1" oninput="calcSproc()">
+            <span class="field-sfx">people</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Avg eng salary / yr</label>
+          <div class="field-input-row">
+            <span class="field-pfx">$</span>
+            <input type="number" id="s_cost" value="140000" min="0" oninput="calcSproc()">
+          </div>
+        </div>
+        <div class="field">
+          <label>Total hrs/week debugging or updating procedures (across team)</label>
+          <div class="field-input-row">
+            <input type="number" id="s_debug_hrs" value="10" min="0" oninput="calcSproc()">
+            <span class="field-sfx">hrs/wk</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Source schema breaks per quarter</label>
+          <div class="field-input-row">
+            <input type="number" id="s_breaks" value="3" min="0" oninput="calcSproc()">
+            <span class="field-sfx">/qtr</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Compute</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Monthly warehouse spend</label>
+          <div class="field-input-row">
+            <span class="field-pfx">$</span>
+            <input type="number" id="s_compute" value="15000" min="0" oninput="calcSproc()">
+            <span class="field-sfx">/mo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="assumption" id="sproc-assumptions"></div>
+    <button class="reset-btn" onclick="resetSproc()">Reset</button>
+  </div>
+
+  <!-- ══ Teams / Starter ══ -->
+  <div class="panel" id="panel-teams">
+
+    <div class="toggle-row">
+      <span class="toggle-label">Plan type</span>
+      <div class="toggle">
+        <button class="toggle-opt active" id="tog-starter" onclick="setPlan('starter')">Starter</button>
+        <button class="toggle-opt" id="tog-legacy" onclick="setPlan('legacy')">Legacy Teams</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Usage</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Developer seats in use</label>
+          <div class="field-input-row">
+            <input type="number" id="t_seats" value="10" min="1" oninput="calcTeams()">
+            <span class="field-sfx">seats</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Team</div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Data engineers on team</label>
+          <div class="field-input-row">
+            <input type="number" id="t_eng" value="5" min="1" oninput="calcTeams()">
+            <span class="field-sfx">people</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Avg eng salary / yr</label>
+          <div class="field-input-row">
+            <span class="field-pfx">$</span>
+            <input type="number" id="t_cost" value="140000" min="0" oninput="calcTeams()">
+          </div>
+        </div>
+        <div class="field">
+          <label>Total hrs/week on workarounds for missing features (across team)</label>
+          <div class="field-input-row">
+            <input type="number" id="t_workaround_hrs" value="4" min="0" oninput="calcTeams()">
+            <span class="field-sfx">hrs/wk</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="assumption" id="teams-assumptions"></div>
+    <button class="reset-btn" onclick="resetTeams()">Reset</button>
+  </div>
+
+</div>
+
+<script>
+function fmt(n) {
+  if (n >= 1000000) return '$' + (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000)    return '$' + Math.round(n/1000) + 'K';
+  return '$' + Math.round(n).toLocaleString();
+}
+function v(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+function setResult(total, lines) {
+  document.getElementById('r_total').textContent = fmt(total);
+  document.getElementById('r_mo').textContent    = fmt(total / 12) + ' / month';
+  document.getElementById('r_breakdown').innerHTML = lines.map(l =>
+    `<div class="result-line"><span>${l.label}</span><span class="result-line-val">${fmt(l.val)}</span></div>`
+  ).join('');
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) =>
+    t.classList.toggle('active', ['core','sproc','teams'][i] === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  ({ core: calcCore, sproc: calcSproc, teams: calcTeams })[name]();
+}
+
+/* ── Core ── */
+function calcCore() {
+  const hourly      = (v('c_cost') * 1.25) / 2080;
+  const engCost     = (v('c_fire_hrs') + v('c_infra_hrs')) * 50 * hourly;
+  const computeCost = v('c_compute') * 12 * 0.35;
+  const bizCost     = v('c_incidents') * 12 * hourly * 3;
+  const total       = engCost + computeCost + bizCost;
+  setResult(total, [
+    { label: 'Eng time lost',  val: engCost },
+    { label: 'Compute waste',  val: computeCost },
+    { label: 'Downtime cost',  val: bizCost },
+  ]);
+  const downtimePer = Math.round(hourly * 3);
+  document.getElementById('core-assumptions').innerHTML =
+    `<strong>Baked in:</strong> 35% of warehouse spend assumed wasted on unnecessary full rebuilds (no incremental / no SAO). Downtime cost uses your eng hourly rate × 3 to account for fix time and downstream impact (~$${downtimePer}/hr). Salary loaded at 1.25×.`;
+}
+
+/* ── Stored Procs ── */
+function calcSproc() {
+  const hourly      = (v('s_cost') * 1.25) / 2080;
+  const engCost     = v('s_debug_hrs') * 50 * hourly;
+  const computeCost = v('s_compute') * 12 * 0.45;
+  const bizCost     = v('s_breaks') * 4 * 12000;
+  const total       = engCost + computeCost + bizCost;
+  setResult(total, [
+    { label: 'Maintenance labor', val: engCost },
+    { label: 'Compute waste',     val: computeCost },
+    { label: 'Schema breakage',   val: bizCost },
+  ]);
+  document.getElementById('sproc-assumptions').innerHTML =
+    `<strong>Baked in:</strong> 45% of warehouse spend assumed wasted (stored procs rebuild full tables, no incremental). Each schema breakage estimated at $12K — ~2 days to trace, fix, and re-validate. Salary loaded at 1.25×.`;
+}
+
+/* ── Teams / Starter ── */
+let planType = 'starter';
+
+function setPlan(type) {
+  planType = type;
+  document.getElementById('tog-starter').classList.toggle('active', type === 'starter');
+  document.getElementById('tog-legacy').classList.toggle('active', type === 'legacy');
+  calcTeams();
+}
+
+function calcTeams() {
+  const hourly  = (v('t_cost') * 1.25) / 2080;
+  const engCost = v('t_workaround_hrs') * 50 * hourly;
+
+  const included    = planType === 'starter' ? 8 : 5;
+  const overageRate = planType === 'starter' ? 100 : 50;
+  const extraSeats  = Math.max(v('t_seats') - included, 0);
+  const overageCost = extraSeats * overageRate * 12;
+
+  const total = overageCost + engCost;
+
+  setResult(total, [
+    { label: 'Seat overages',   val: overageCost },
+    { label: 'Eng workarounds', val: engCost },
+  ]);
+
+  const planNote = planType === 'starter'
+    ? `Starter: 8 seats included, $100/seat/mo overage.`
+    : `Legacy Teams: 5 seats included, ~$50/seat/mo overage.`;
+  document.getElementById('teams-assumptions').innerHTML =
+    `<strong>Baked in:</strong> ${planNote} Salary loaded at 1.25×.`;
+}
+
+/* ── resets ── */
+function resetCore() {
+  [['c_eng',5],['c_cost',140000],['c_fire_hrs',8],['c_infra_hrs',6],['c_compute',15000],['c_incidents',8]]
+    .forEach(([id,val]) => document.getElementById(id).value = val);
+  calcCore();
+}
+function resetSproc() {
+  [['s_eng',3],['s_cost',140000],['s_debug_hrs',10],['s_breaks',3],['s_compute',15000]]
+    .forEach(([id,val]) => document.getElementById(id).value = val);
+  calcSproc();
+}
+function resetTeams() {
+  [['t_seats',10],['t_eng',5],['t_cost',140000],['t_workaround_hrs',4]]
+    .forEach(([id,val]) => document.getElementById(id).value = val);
+  setPlan('starter');
+}
+
+calcCore();
+</script>
+</body>
+</html>
