@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cost of Doing Nothing — dbt Labs</title>
+<title>Cost of Doing Nothing | dbt Labs</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -158,7 +158,7 @@ body {
 
   <div class="page-header">
     <div class="page-title">Cost of doing nothing</div>
-    <div class="page-sub">Fill in what you know. Rough estimate — meant for early discovery.</div>
+    <div class="page-sub">Fill in what you know. Rough estimate, meant for early discovery.</div>
   </div>
 
   <div class="tabs">
@@ -402,7 +402,7 @@ function calcSproc() {
     { label: 'Schema breakage',   val: bizCost },
   ]);
   document.getElementById('sproc-assumptions').innerHTML =
-    `<strong>Baked in:</strong> 45% of warehouse spend assumed wasted (stored procs rebuild full tables, no incremental). Each schema breakage estimated at $12K — ~2 days to trace, fix, and re-validate. Salary loaded at 1.25×.`;
+    `<strong>Baked in:</strong> 45% of warehouse spend assumed wasted (stored procs rebuild full tables, no incremental). Each schema breakage estimated at $12K (~2 days to trace, fix, and re-validate). Salary loaded at 1.25×.`;
 }
 
 /* ── Teams / Starter ── */
