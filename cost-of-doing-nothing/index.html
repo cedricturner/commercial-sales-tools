@@ -382,7 +382,7 @@ if(HASHES.includes(sessionStorage.getItem('cst_auth')))document.getElementById('
         <div class="field assumption-field">
           <label>Compute waste estimate</label>
           <div class="field-input-row">
-            <input type="number" id="c_waste_pct" value="35" min="0" max="100" oninput="calcCore()">
+            <input type="number" id="c_waste_pct" value="0" min="0" max="100" oninput="calcCore()">
             <span class="field-sfx">%</span>
           </div>
         </div>
@@ -474,7 +474,7 @@ if(HASHES.includes(sessionStorage.getItem('cst_auth')))document.getElementById('
         <div class="field assumption-field">
           <label>Compute waste estimate</label>
           <div class="field-input-row">
-            <input type="number" id="s_waste_pct" value="45" min="0" max="100" oninput="calcSproc()">
+            <input type="number" id="s_waste_pct" value="25" min="0" max="100" oninput="calcSproc()">
             <span class="field-sfx">%</span>
           </div>
         </div>
@@ -637,7 +637,7 @@ function switchTab(name) {
 function calcCore() {
   const load     = currentMode === 'advanced' ? v('c_load')         : 1.25;
   const weeks    = currentMode === 'advanced' ? v('c_weeks')        : 50;
-  const wastePct = currentMode === 'advanced' ? v('c_waste_pct')/100 : 0.35;
+  const wastePct = currentMode === 'advanced' ? v('c_waste_pct')/100 : 0;
   const dtMult   = currentMode === 'advanced' ? v('c_downtime_mult') : 3;
 
   const hourly      = (v('c_cost') * load) / (weeks * 40);
@@ -662,7 +662,7 @@ function calcCore() {
 function calcSproc() {
   const load      = currentMode === 'advanced' ? v('s_load')          : 1.25;
   const weeks     = currentMode === 'advanced' ? v('s_weeks')         : 50;
-  const wastePct  = currentMode === 'advanced' ? v('s_waste_pct')/100 : 0.45;
+  const wastePct  = currentMode === 'advanced' ? v('s_waste_pct')/100 : 0.25;
   const breakCost = currentMode === 'advanced' ? v('s_break_cost')    : 12000;
 
   const hourly      = (v('s_cost') * load) / (weeks * 40);
@@ -733,13 +733,13 @@ function calcTeams() {
 /* ── Resets ── */
 function resetCore() {
   [['c_eng',5],['c_cost',140000],['c_fire_hrs',8],['c_infra_hrs',6],['c_compute',15000],['c_incidents',8],
-   ['c_load',1.25],['c_weeks',50],['c_waste_pct',35],['c_downtime_mult',3]]
+   ['c_load',1.25],['c_weeks',50],['c_waste_pct',0],['c_downtime_mult',3]]
     .forEach(([id,val]) => document.getElementById(id).value = val);
   calcCore();
 }
 function resetSproc() {
   [['s_eng',3],['s_cost',140000],['s_debug_hrs',10],['s_breaks',3],['s_compute',15000],
-   ['s_load',1.25],['s_weeks',50],['s_waste_pct',45],['s_break_cost',12000]]
+   ['s_load',1.25],['s_weeks',50],['s_waste_pct',25],['s_break_cost',12000]]
     .forEach(([id,val]) => document.getElementById(id).value = val);
   calcSproc();
 }
