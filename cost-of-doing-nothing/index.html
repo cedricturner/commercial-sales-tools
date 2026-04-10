@@ -18,9 +18,46 @@ body {
 
 .page { width: 100%; max-width: 520px; margin: 0 auto; }
 
-.page-header { margin-bottom: 1.75rem; }
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+.page-header-text {}
 .page-title { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
 .page-sub { font-size: 13px; color: #7a7870; line-height: 1.5; }
+
+/* ── MODE TOGGLE ── */
+.mode-toggle {
+  display: flex;
+  background: #ebe9e4;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+.mode-btn {
+  padding: 5px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: #7a7870;
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.mode-btn.active {
+  background: #fff;
+  color: #1a1916;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
 
 /* ── TABS ── */
 .tabs {
@@ -95,6 +132,38 @@ body {
 }
 .field input::-webkit-inner-spin-button { opacity: 0.35; }
 
+/* ── ADVANCED ASSUMPTION FIELDS ── */
+.field.assumption-field {
+  background: #faf9f7;
+  border-color: #e4e2db;
+}
+.field.assumption-field label { color: #8a8880; }
+.field.assumption-field input { color: #3a3830; font-size: 14px; }
+
+.advanced-section { display: none; }
+.advanced-section.visible { display: block; }
+
+.advanced-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0.75rem;
+}
+.advanced-divider-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #b0ae a8;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #aaa8a0;
+  white-space: nowrap;
+}
+.advanced-divider-line {
+  flex: 1;
+  height: 1px;
+  background: #e4e2db;
+}
+
 /* ── TOGGLE ── */
 .toggle-row {
   display: flex;
@@ -138,7 +207,7 @@ body {
 /* ── RESET ── */
 .reset-btn {
   display: block; width: 100%; padding: 8px;
-  background: transparent; color: #b0ae a8; border: none;
+  background: transparent; border: none;
   font-family: inherit; font-size: 12px; cursor: pointer;
   margin-top: 1rem; transition: color 0.1s; text-align: center;
   color: #aaa8a0;
@@ -157,8 +226,14 @@ body {
 <div class="page">
 
   <div class="page-header">
-    <div class="page-title">Cost of doing nothing</div>
-    <div class="page-sub">Fill in what you know. Rough estimate, meant for early discovery.</div>
+    <div class="page-header-text">
+      <div class="page-title">Cost of doing nothing</div>
+      <div class="page-sub">Fill in what you know. Rough estimate, meant for early discovery.</div>
+    </div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-simple" onclick="setMode('simple')">Simple</button>
+      <button class="mode-btn" id="mode-advanced" onclick="setMode('advanced')">Advanced</button>
+    </div>
   </div>
 
   <div class="tabs">
@@ -233,6 +308,44 @@ body {
       </div>
     </div>
 
+    <!-- Advanced assumptions: Core -->
+    <div class="advanced-section" id="adv-core">
+      <div class="advanced-divider">
+        <span class="advanced-divider-label">Assumptions</span>
+        <div class="advanced-divider-line"></div>
+      </div>
+      <div class="field-grid">
+        <div class="field assumption-field">
+          <label>Salary load multiplier</label>
+          <div class="field-input-row">
+            <input type="number" id="c_load" value="1.25" min="1" step="0.05" oninput="calcCore()">
+            <span class="field-sfx">×</span>
+          </div>
+        </div>
+        <div class="field assumption-field">
+          <label>Working weeks / yr</label>
+          <div class="field-input-row">
+            <input type="number" id="c_weeks" value="50" min="1" max="52" oninput="calcCore()">
+            <span class="field-sfx">wks</span>
+          </div>
+        </div>
+        <div class="field assumption-field">
+          <label>Compute waste estimate</label>
+          <div class="field-input-row">
+            <input type="number" id="c_waste_pct" value="35" min="0" max="100" oninput="calcCore()">
+            <span class="field-sfx">%</span>
+          </div>
+        </div>
+        <div class="field assumption-field">
+          <label>Downtime impact multiplier</label>
+          <div class="field-input-row">
+            <input type="number" id="c_downtime_mult" value="3" min="1" step="0.5" oninput="calcCore()">
+            <span class="field-sfx">×</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="assumption" id="core-assumptions"></div>
     <button class="reset-btn" onclick="resetCore()">Reset</button>
   </div>
@@ -282,6 +395,44 @@ body {
             <span class="field-pfx">$</span>
             <input type="number" id="s_compute" value="15000" min="0" oninput="calcSproc()">
             <span class="field-sfx">/mo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced assumptions: Sproc -->
+    <div class="advanced-section" id="adv-sproc">
+      <div class="advanced-divider">
+        <span class="advanced-divider-label">Assumptions</span>
+        <div class="advanced-divider-line"></div>
+      </div>
+      <div class="field-grid">
+        <div class="field assumption-field">
+          <label>Salary load multiplier</label>
+          <div class="field-input-row">
+            <input type="number" id="s_load" value="1.25" min="1" step="0.05" oninput="calcSproc()">
+            <span class="field-sfx">×</span>
+          </div>
+        </div>
+        <div class="field assumption-field">
+          <label>Working weeks / yr</label>
+          <div class="field-input-row">
+            <input type="number" id="s_weeks" value="50" min="1" max="52" oninput="calcSproc()">
+            <span class="field-sfx">wks</span>
+          </div>
+        </div>
+        <div class="field assumption-field">
+          <label>Compute waste estimate</label>
+          <div class="field-input-row">
+            <input type="number" id="s_waste_pct" value="45" min="0" max="100" oninput="calcSproc()">
+            <span class="field-sfx">%</span>
+          </div>
+        </div>
+        <div class="field assumption-field">
+          <label>Cost per schema break</label>
+          <div class="field-input-row">
+            <span class="field-pfx">$</span>
+            <input type="number" id="s_break_cost" value="12000" min="0" oninput="calcSproc()">
           </div>
         </div>
       </div>
@@ -342,6 +493,44 @@ body {
       </div>
     </div>
 
+    <!-- Advanced assumptions: Teams -->
+    <div class="advanced-section" id="adv-teams">
+      <div class="advanced-divider">
+        <span class="advanced-divider-label">Assumptions</span>
+        <div class="advanced-divider-line"></div>
+      </div>
+      <div class="field-grid">
+        <div class="field assumption-field">
+          <label>Salary load multiplier</label>
+          <div class="field-input-row">
+            <input type="number" id="t_load" value="1.25" min="1" step="0.05" oninput="calcTeams()">
+            <span class="field-sfx">×</span>
+          </div>
+        </div>
+        <div class="field assumption-field">
+          <label>Working weeks / yr</label>
+          <div class="field-input-row">
+            <input type="number" id="t_weeks" value="50" min="1" max="52" oninput="calcTeams()">
+            <span class="field-sfx">wks</span>
+          </div>
+        </div>
+        <div class="field assumption-field" id="adv-starter-seats-field">
+          <label id="adv-included-seats-label">Starter: included seats</label>
+          <div class="field-input-row">
+            <input type="number" id="t_included_seats" value="8" min="0" oninput="calcTeams()">
+            <span class="field-sfx">seats</span>
+          </div>
+        </div>
+        <div class="field assumption-field">
+          <label id="adv-overage-label">Starter: overage / seat / mo</label>
+          <div class="field-input-row">
+            <span class="field-pfx">$</span>
+            <input type="number" id="t_overage_rate" value="100" min="0" oninput="calcTeams()">
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="assumption" id="teams-assumptions"></div>
     <button class="reset-btn" onclick="resetTeams()">Reset</button>
   </div>
@@ -355,6 +544,28 @@ function fmt(n) {
   return '$' + Math.round(n).toLocaleString();
 }
 function v(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+/* ── Mode ── */
+let currentMode = 'simple';
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('mode-simple').classList.toggle('active', mode === 'simple');
+  document.getElementById('mode-advanced').classList.toggle('active', mode === 'advanced');
+  document.querySelectorAll('.advanced-section').forEach(el => {
+    el.classList.toggle('visible', mode === 'advanced');
+  });
+  recalcActive();
+}
+
+function recalcActive() {
+  const active = document.querySelector('.panel.active');
+  if (!active) return;
+  const id = active.id;
+  if (id === 'panel-core')  calcCore();
+  if (id === 'panel-sproc') calcSproc();
+  if (id === 'panel-teams') calcTeams();
+}
 
 function setResult(total, lines) {
   document.getElementById('r_total').textContent = fmt(total);
@@ -374,35 +585,51 @@ function switchTab(name) {
 
 /* ── Core ── */
 function calcCore() {
-  const hourly      = (v('c_cost') * 1.25) / 2080;
-  const engCost     = (v('c_fire_hrs') + v('c_infra_hrs')) * 50 * hourly;
-  const computeCost = v('c_compute') * 12 * 0.35;
-  const bizCost     = v('c_incidents') * 12 * hourly * 3;
+  const load     = currentMode === 'advanced' ? v('c_load')         : 1.25;
+  const weeks    = currentMode === 'advanced' ? v('c_weeks')        : 50;
+  const wastePct = currentMode === 'advanced' ? v('c_waste_pct')/100 : 0.35;
+  const dtMult   = currentMode === 'advanced' ? v('c_downtime_mult') : 3;
+
+  const hourly      = (v('c_cost') * load) / (weeks * 40);
+  const engCost     = (v('c_fire_hrs') + v('c_infra_hrs')) * weeks * hourly;
+  const computeCost = v('c_compute') * 12 * wastePct;
+  const bizCost     = v('c_incidents') * 12 * hourly * dtMult;
   const total       = engCost + computeCost + bizCost;
+
   setResult(total, [
     { label: 'Eng time lost',  val: engCost },
     { label: 'Compute waste',  val: computeCost },
     { label: 'Downtime cost',  val: bizCost },
   ]);
-  const downtimePer = Math.round(hourly * 3);
+
+  const downtimePer = Math.round(hourly * dtMult);
+  const wastePctDisplay = Math.round(wastePct * 100);
   document.getElementById('core-assumptions').innerHTML =
-    `<strong>Baked in:</strong> 35% of warehouse spend assumed wasted on unnecessary full rebuilds (no incremental / no SAO). Downtime cost uses your eng hourly rate × 3 to account for fix time and downstream impact (~$${downtimePer}/hr). Salary loaded at 1.25×.`;
+    `<strong>Baked in:</strong> ${wastePctDisplay}% of warehouse spend assumed wasted on unnecessary full rebuilds (no incremental / no SAO). Downtime cost uses your eng hourly rate x ${dtMult} to account for fix time and downstream impact (~$${downtimePer}/hr). Salary loaded at ${load}x.`;
 }
 
 /* ── Stored Procs ── */
 function calcSproc() {
-  const hourly      = (v('s_cost') * 1.25) / 2080;
-  const engCost     = v('s_debug_hrs') * 50 * hourly;
-  const computeCost = v('s_compute') * 12 * 0.45;
-  const bizCost     = v('s_breaks') * 4 * 12000;
+  const load      = currentMode === 'advanced' ? v('s_load')          : 1.25;
+  const weeks     = currentMode === 'advanced' ? v('s_weeks')         : 50;
+  const wastePct  = currentMode === 'advanced' ? v('s_waste_pct')/100 : 0.45;
+  const breakCost = currentMode === 'advanced' ? v('s_break_cost')    : 12000;
+
+  const hourly      = (v('s_cost') * load) / (weeks * 40);
+  const engCost     = v('s_debug_hrs') * weeks * hourly;
+  const computeCost = v('s_compute') * 12 * wastePct;
+  const bizCost     = v('s_breaks') * 4 * breakCost;
   const total       = engCost + computeCost + bizCost;
+
   setResult(total, [
     { label: 'Maintenance labor', val: engCost },
     { label: 'Compute waste',     val: computeCost },
     { label: 'Schema breakage',   val: bizCost },
   ]);
+
+  const wastePctDisplay = Math.round(wastePct * 100);
   document.getElementById('sproc-assumptions').innerHTML =
-    `<strong>Baked in:</strong> 45% of warehouse spend assumed wasted (stored procs rebuild full tables, no incremental). Each schema breakage estimated at $12K (~2 days to trace, fix, and re-validate). Salary loaded at 1.25×.`;
+    `<strong>Baked in:</strong> ${wastePctDisplay}% of warehouse spend assumed wasted (stored procs rebuild full tables, no incremental). Each schema breakage estimated at ${fmt(breakCost)} (~2 days to trace, fix, and re-validate). Salary loaded at ${load}x.`;
 }
 
 /* ── Teams / Starter ── */
@@ -412,19 +639,34 @@ function setPlan(type) {
   planType = type;
   document.getElementById('tog-starter').classList.toggle('active', type === 'starter');
   document.getElementById('tog-legacy').classList.toggle('active', type === 'legacy');
+
+  // Update advanced labels and defaults to match plan
+  if (type === 'starter') {
+    document.getElementById('adv-included-seats-label').textContent = 'Starter: included seats';
+    document.getElementById('adv-overage-label').textContent = 'Starter: overage / seat / mo';
+    document.getElementById('t_included_seats').value = 8;
+    document.getElementById('t_overage_rate').value = 100;
+  } else {
+    document.getElementById('adv-included-seats-label').textContent = 'Legacy Teams: included seats';
+    document.getElementById('adv-overage-label').textContent = 'Legacy Teams: overage / seat / mo';
+    document.getElementById('t_included_seats').value = 5;
+    document.getElementById('t_overage_rate').value = 50;
+  }
   calcTeams();
 }
 
 function calcTeams() {
-  const hourly  = (v('t_cost') * 1.25) / 2080;
-  const engCost = v('t_workaround_hrs') * 50 * hourly;
+  const load    = currentMode === 'advanced' ? v('t_load')  : 1.25;
+  const weeks   = currentMode === 'advanced' ? v('t_weeks') : 50;
 
-  const included    = planType === 'starter' ? 8 : 5;
-  const overageRate = planType === 'starter' ? 100 : 50;
+  const included    = currentMode === 'advanced' ? v('t_included_seats') : (planType === 'starter' ? 8 : 5);
+  const overageRate = currentMode === 'advanced' ? v('t_overage_rate')   : (planType === 'starter' ? 100 : 50);
+
+  const hourly      = (v('t_cost') * load) / (weeks * 40);
+  const engCost     = v('t_workaround_hrs') * weeks * hourly;
   const extraSeats  = Math.max(v('t_seats') - included, 0);
   const overageCost = extraSeats * overageRate * 12;
-
-  const total = overageCost + engCost;
+  const total       = overageCost + engCost;
 
   setResult(total, [
     { label: 'Seat overages',   val: overageCost },
@@ -432,25 +674,28 @@ function calcTeams() {
   ]);
 
   const planNote = planType === 'starter'
-    ? `Starter: 8 seats included, $100/seat/mo overage.`
-    : `Legacy Teams: 5 seats included, ~$50/seat/mo overage.`;
+    ? `Starter: ${included} seats included, $${overageRate}/seat/mo overage.`
+    : `Legacy Teams: ${included} seats included, ~$${overageRate}/seat/mo overage.`;
   document.getElementById('teams-assumptions').innerHTML =
-    `<strong>Baked in:</strong> ${planNote} Salary loaded at 1.25×.`;
+    `<strong>Baked in:</strong> ${planNote} Salary loaded at ${load}x.`;
 }
 
-/* ── resets ── */
+/* ── Resets ── */
 function resetCore() {
-  [['c_eng',5],['c_cost',140000],['c_fire_hrs',8],['c_infra_hrs',6],['c_compute',15000],['c_incidents',8]]
+  [['c_eng',5],['c_cost',140000],['c_fire_hrs',8],['c_infra_hrs',6],['c_compute',15000],['c_incidents',8],
+   ['c_load',1.25],['c_weeks',50],['c_waste_pct',35],['c_downtime_mult',3]]
     .forEach(([id,val]) => document.getElementById(id).value = val);
   calcCore();
 }
 function resetSproc() {
-  [['s_eng',3],['s_cost',140000],['s_debug_hrs',10],['s_breaks',3],['s_compute',15000]]
+  [['s_eng',3],['s_cost',140000],['s_debug_hrs',10],['s_breaks',3],['s_compute',15000],
+   ['s_load',1.25],['s_weeks',50],['s_waste_pct',45],['s_break_cost',12000]]
     .forEach(([id,val]) => document.getElementById(id).value = val);
   calcSproc();
 }
 function resetTeams() {
-  [['t_seats',10],['t_eng',5],['t_cost',140000],['t_workaround_hrs',4]]
+  [['t_seats',10],['t_eng',5],['t_cost',140000],['t_workaround_hrs',4],
+   ['t_load',1.25],['t_weeks',50]]
     .forEach(([id,val]) => document.getElementById(id).value = val);
   setPlan('starter');
 }
