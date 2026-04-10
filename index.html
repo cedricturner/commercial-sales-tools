@@ -208,9 +208,72 @@ h1 {
 .github-btn svg {
   flex-shrink: 0;
 }
+/* ── GATE ── */
+#gate {
+  position: fixed; inset: 0; z-index: 9999;
+  background: #0e1117;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.25rem;
+}
+.gate-card { width: 100%; max-width: 340px; text-align: center; }
+.gate-tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 500;
+  color: #ff6b35;
+  background: rgba(255,107,53,0.1);
+  border: 1px solid rgba(255,107,53,0.25);
+  border-radius: 6px;
+  padding: 3px 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+}
+.gate-title { font-size: 22px; font-weight: 700; color: #e6edf3; letter-spacing: -0.02em; margin-bottom: 0.35rem; }
+.gate-sub { font-size: 13px; color: #7d8590; margin-bottom: 1.75rem; }
+.gate-input-wrap { display: flex; flex-direction: column; gap: 8px; }
+.gate-input {
+  width: 100%; background: #161b22;
+  border: 1px solid #30363d; border-radius: 8px;
+  padding: 11px 14px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 15px; color: #e6edf3;
+  outline: none; transition: border-color 0.15s;
+  text-align: center; letter-spacing: 0.05em;
+}
+.gate-input:focus { border-color: #ff6b35; }
+.gate-input::placeholder { color: #484f58; letter-spacing: 0; }
+.gate-btn {
+  width: 100%; background: #ff6b35; border: none; border-radius: 8px;
+  padding: 11px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 14px; font-weight: 600;
+  color: #fff; cursor: pointer; transition: background 0.15s;
+}
+.gate-btn:hover { background: #e85c28; }
+.gate-error { font-size: 12px; color: #f85149; margin-top: 4px; min-height: 18px; }
 </style>
 </head>
 <body>
+
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-tag">dbt Labs · Commercial</div>
+    <div class="gate-title">Sales Tools</div>
+    <div class="gate-sub">Enter your access password to continue.</div>
+    <div class="gate-input-wrap">
+      <input class="gate-input" id="gate-input" type="password" placeholder="password" onkeydown="if(event.key==='Enter')unlock()">
+      <button class="gate-btn" onclick="unlock()">Continue</button>
+      <div class="gate-error" id="gate-error"></div>
+    </div>
+  </div>
+</div>
+<script>
+const HASHES=['19c77725462e49c76147378f7ddbe7f14e53e4f2f34ac43373dde927942a8728','89c4793acf516d3e875286ee2f5b6374fb8ee71e734ef4605c3ed3af5a87fb26'];
+async function sha256(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');}
+async function unlock(){const h=await sha256(document.getElementById('gate-input').value);if(HASHES.includes(h)){sessionStorage.setItem('cst_auth',h);document.getElementById('gate').style.display='none';}else{document.getElementById('gate-error').textContent='Incorrect password.';document.getElementById('gate-input').value='';}}
+if(HASHES.includes(sessionStorage.getItem('cst_auth')))document.getElementById('gate').style.display='none';
+</script>
 
 <div class="container">
 
