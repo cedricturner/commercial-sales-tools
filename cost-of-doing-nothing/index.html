@@ -464,6 +464,13 @@ body {
             <span class="field-sfx">seats</span>
           </div>
         </div>
+        <div class="field" id="t_builds_field">
+          <label>Model builds per month</label>
+          <div class="field-input-row">
+            <input type="number" id="t_builds" value="0" min="0" oninput="calcTeams()">
+            <span class="field-sfx">builds</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -527,6 +534,20 @@ body {
           <div class="field-input-row">
             <span class="field-pfx">$</span>
             <input type="number" id="t_overage_rate" value="100" min="0" oninput="calcTeams()">
+          </div>
+        </div>
+        <div class="field assumption-field" id="adv-builds-included-field">
+          <label>Starter: included builds / mo</label>
+          <div class="field-input-row">
+            <input type="number" id="t_included_builds" value="15000" min="0" oninput="calcTeams()">
+            <span class="field-sfx">builds</span>
+          </div>
+        </div>
+        <div class="field assumption-field" id="adv-builds-rate-field">
+          <label>Starter: overage / build</label>
+          <div class="field-input-row">
+            <span class="field-pfx">$</span>
+            <input type="number" id="t_build_rate" value="0.01" min="0" step="0.001" oninput="calcTeams()">
           </div>
         </div>
       </div>
@@ -641,8 +662,14 @@ function setPlan(type) {
   document.getElementById('tog-starter').classList.toggle('active', type === 'starter');
   document.getElementById('tog-legacy').classList.toggle('active', type === 'legacy');
 
-  // Update advanced labels and defaults to match plan
-  if (type === 'starter') {
+  const isStarter = type === 'starter';
+
+  // Show/hide model builds field and advanced build assumption fields
+  document.getElementById('t_builds_field').style.display = isStarter ? '' : 'none';
+  document.getElementById('adv-builds-included-field').style.display = isStarter ? '' : 'none';
+  document.getElementById('adv-builds-rate-field').style.display = isStarter ? '' : 'none';
+
+  if (isStarter) {
     document.getElementById('adv-included-seats-label').textContent = 'Starter: included seats';
     document.getElementById('adv-overage-label').textContent = 'Starter: overage / seat / mo';
     document.getElementById('t_included_seats').value = 8;
@@ -667,16 +694,29 @@ function calcTeams() {
   const engCost     = v('t_workaround_hrs') * weeks * hourly;
   const extraSeats  = Math.max(v('t_seats') - included, 0);
   const overageCost = extraSeats * overageRate * 12;
-  const total       = overageCost + engCost;
 
-  setResult(total, [
+  let buildOverageCost = 0;
+  let includedBuilds = 0;
+  let buildRate = 0;
+  if (planType === 'starter') {
+    includedBuilds = currentMode === 'advanced' ? v('t_included_builds') : 15000;
+    buildRate      = currentMode === 'advanced' ? v('t_build_rate')      : 0.01;
+    const extraBuilds = Math.max(v('t_builds') - includedBuilds, 0);
+    buildOverageCost  = extraBuilds * buildRate * 12;
+  }
+
+  const total = overageCost + buildOverageCost + engCost;
+
+  const lines = [
     { label: 'Seat overages',   val: overageCost },
+    ...(planType === 'starter' ? [{ label: 'Build overages', val: buildOverageCost }] : []),
     { label: 'Eng workarounds', val: engCost },
-  ]);
+  ];
+  setResult(total, lines);
 
   const planNote = planType === 'starter'
-    ? `Starter: ${included} seats included, $${overageRate}/seat/mo overage.`
-    : `Legacy Teams: ${included} seats included, ~$${overageRate}/seat/mo overage.`;
+    ? `Starter: ${included} seats included at $${overageRate}/seat/mo overage; ${includedBuilds.toLocaleString()} model builds/mo included at $${buildRate}/build overage.`
+    : `Legacy Teams: ${included} seats included, ~$${overageRate}/seat/mo overage. No model build limit.`;
   document.getElementById('teams-assumptions').innerHTML =
     `<strong>Baked in:</strong> ${planNote} Salary loaded at ${load}x.`;
 }
@@ -696,7 +736,7 @@ function resetSproc() {
 }
 function resetTeams() {
   [['t_seats',10],['t_eng',5],['t_cost',140000],['t_workaround_hrs',4],
-   ['t_load',1.25],['t_weeks',50]]
+   ['t_load',1.25],['t_weeks',50],['t_builds',0],['t_included_builds',15000],['t_build_rate',0.01]]
     .forEach(([id,val]) => document.getElementById(id).value = val);
   setPlan('starter');
 }
