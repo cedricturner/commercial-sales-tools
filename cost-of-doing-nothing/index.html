@@ -612,7 +612,7 @@ function calcCore() {
   const wastePct = currentMode === 'advanced' ? v('c_waste_pct')/100 : 0;
   const dtMult   = currentMode === 'advanced' ? v('c_downtime_mult') : 3;
 
-  const hourly      = (v('c_cost') * load) / (weeks * 40);
+  const hourly      = (v('c_eng') * v('c_cost') * load) / (weeks * 40);
   const engCost     = (v('c_fire_hrs') + v('c_infra_hrs')) * weeks * hourly;
   const computeCost = v('c_compute') * 12 * wastePct;
   const bizCost     = v('c_incidents') * 12 * hourly * dtMult;
