@@ -420,9 +420,9 @@ if(HASHES.includes(sessionStorage.getItem('cst_auth')))document.getElementById('
           </div>
         </div>
         <div class="field">
-          <label>Total hrs/week debugging or updating procedures (across team)</label>
+          <label>Avg hrs/week per engineer debugging or updating procedures</label>
           <div class="field-input-row">
-            <input type="number" id="s_debug_hrs" value="10" min="0" oninput="calcSproc()">
+            <input type="number" id="s_debug_hrs" value="3" min="0" oninput="calcSproc()">
             <span class="field-sfx">hrs/wk</span>
           </div>
         </div>
@@ -523,33 +523,6 @@ if(HASHES.includes(sessionStorage.getItem('cst_auth')))document.getElementById('
       </div>
     </div>
 
-    <div class="section">
-      <div class="section-label">Team</div>
-      <div class="field-grid">
-        <div class="field">
-          <label>Data engineers on team</label>
-          <div class="field-input-row">
-            <input type="number" id="t_eng" value="5" min="1" oninput="calcTeams()">
-            <span class="field-sfx">people</span>
-          </div>
-        </div>
-        <div class="field">
-          <label>Avg eng salary / yr</label>
-          <div class="field-input-row">
-            <span class="field-pfx">$</span>
-            <input type="number" id="t_cost" value="140000" min="0" oninput="calcTeams()">
-          </div>
-        </div>
-        <div class="field">
-          <label>Total hrs/week on workarounds for missing features (across team)</label>
-          <div class="field-input-row">
-            <input type="number" id="t_workaround_hrs" value="4" min="0" oninput="calcTeams()">
-            <span class="field-sfx">hrs/wk</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Advanced assumptions: Teams -->
     <div class="advanced-section" id="adv-teams">
       <div class="advanced-divider">
@@ -557,20 +530,6 @@ if(HASHES.includes(sessionStorage.getItem('cst_auth')))document.getElementById('
         <div class="advanced-divider-line"></div>
       </div>
       <div class="field-grid">
-        <div class="field assumption-field">
-          <label>Salary load multiplier</label>
-          <div class="field-input-row">
-            <input type="number" id="t_load" value="1.25" min="1" step="0.05" oninput="calcTeams()">
-            <span class="field-sfx">×</span>
-          </div>
-        </div>
-        <div class="field assumption-field">
-          <label>Working weeks / yr</label>
-          <div class="field-input-row">
-            <input type="number" id="t_weeks" value="50" min="1" max="52" oninput="calcTeams()">
-            <span class="field-sfx">wks</span>
-          </div>
-        </div>
         <div class="field assumption-field" id="adv-starter-seats-field">
           <label id="adv-included-seats-label">Starter: included seats</label>
           <div class="field-input-row">
@@ -687,7 +646,7 @@ function calcSproc() {
   const breakCost = currentMode === 'advanced' ? v('s_break_cost')    : 12000;
 
   const hourly      = (v('s_cost') * load) / (weeks * 40);
-  const engCost     = v('s_debug_hrs') * weeks * hourly;
+  const engCost     = v('s_debug_hrs') * v('s_eng') * weeks * hourly;
   const computeCost = v('s_compute') * 12 * wastePct;
   const bizCost     = v('s_breaks') * 4 * breakCost;
   const total       = engCost + computeCost + bizCost;
@@ -733,14 +692,9 @@ function setPlan(type) {
 }
 
 function calcTeams() {
-  const load    = currentMode === 'advanced' ? v('t_load')  : 1.25;
-  const weeks   = currentMode === 'advanced' ? v('t_weeks') : 50;
-
   const included    = currentMode === 'advanced' ? v('t_included_seats') : (planType === 'starter' ? 8 : 5);
   const overageRate = currentMode === 'advanced' ? v('t_overage_rate')   : (planType === 'starter' ? 100 : 50);
 
-  const hourly      = (v('t_cost') * load) / (weeks * 40);
-  const engCost     = v('t_workaround_hrs') * weeks * hourly;
   const extraSeats  = Math.max(v('t_seats') - included, 0);
   const overageCost = extraSeats * overageRate * 12;
 
@@ -754,12 +708,11 @@ function calcTeams() {
     buildOverageCost  = extraBuilds * buildRate * 12;
   }
 
-  const total = overageCost + buildOverageCost + engCost;
+  const total = overageCost + buildOverageCost;
 
   const lines = [
-    { label: 'Seat overages',   val: overageCost },
+    { label: 'Seat overages', val: overageCost },
     ...(planType === 'starter' ? [{ label: 'Build overages', val: buildOverageCost }] : []),
-    { label: 'Eng workarounds', val: engCost },
   ];
   setResult(total, lines);
 
@@ -767,7 +720,7 @@ function calcTeams() {
     ? `Starter: ${included} seats included at $${overageRate}/seat/mo overage; ${includedBuilds.toLocaleString()} model builds/mo included at $${buildRate}/build overage.`
     : `Legacy Teams: ${included} seats included, ~$${overageRate}/seat/mo overage. No model build limit.`;
   document.getElementById('teams-assumptions').innerHTML =
-    `<strong>Baked in:</strong> ${planNote} Salary loaded at ${load}x.`;
+    `<strong>Baked in:</strong> ${planNote}`;
 }
 
 /* ── Resets ── */
@@ -778,14 +731,13 @@ function resetCore() {
   calcCore();
 }
 function resetSproc() {
-  [['s_eng',3],['s_cost',140000],['s_debug_hrs',10],['s_breaks',3],['s_compute',15000],
+  [['s_eng',3],['s_cost',140000],['s_debug_hrs',3],['s_breaks',3],['s_compute',15000],
    ['s_load',1.25],['s_weeks',50],['s_waste_pct',25],['s_break_cost',12000]]
     .forEach(([id,val]) => document.getElementById(id).value = val);
   calcSproc();
 }
 function resetTeams() {
-  [['t_seats',10],['t_eng',5],['t_cost',140000],['t_workaround_hrs',4],
-   ['t_load',1.25],['t_weeks',50],['t_builds',0],['t_included_builds',15000],['t_build_rate',0.01]]
+  [['t_seats',10],['t_builds',0],['t_included_builds',15000],['t_build_rate',0.01]]
     .forEach(([id,val]) => document.getElementById(id).value = val);
   setPlan('starter');
 }
