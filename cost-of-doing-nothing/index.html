@@ -321,16 +321,16 @@ if(HASHES.includes(sessionStorage.getItem('cst_auth')))document.getElementById('
           </div>
         </div>
         <div class="field">
-          <label>Total hrs/week spent on pipeline fires (across team)</label>
+          <label>Avg hrs/week per engineer on pipeline fires</label>
           <div class="field-input-row">
-            <input type="number" id="c_fire_hrs" value="8" min="0" oninput="calcCore()">
+            <input type="number" id="c_fire_hrs" value="2" min="0" oninput="calcCore()">
             <span class="field-sfx">hrs/wk</span>
           </div>
         </div>
         <div class="field">
-          <label>Total hrs/week managing infra &amp; CI manually (across team)</label>
+          <label>Avg hrs/week per engineer on infra &amp; CI</label>
           <div class="field-input-row">
-            <input type="number" id="c_infra_hrs" value="6" min="0" oninput="calcCore()">
+            <input type="number" id="c_infra_hrs" value="1" min="0" oninput="calcCore()">
             <span class="field-sfx">hrs/wk</span>
           </div>
         </div>
@@ -661,8 +661,8 @@ function calcCore() {
   const wastePct = currentMode === 'advanced' ? v('c_waste_pct')/100 : 0;
   const dtMult   = currentMode === 'advanced' ? v('c_downtime_mult') : 3;
 
-  const hourly      = (v('c_eng') * v('c_cost') * load) / (weeks * 40);
-  const engCost     = (v('c_fire_hrs') + v('c_infra_hrs')) * weeks * hourly;
+  const hourly      = (v('c_cost') * load) / (weeks * 40);
+  const engCost     = (v('c_fire_hrs') + v('c_infra_hrs')) * v('c_eng') * weeks * hourly;
   const computeCost = v('c_compute') * 12 * wastePct;
   const bizCost     = v('c_incidents') * 12 * hourly * dtMult;
   const total       = engCost + computeCost + bizCost;
@@ -772,7 +772,7 @@ function calcTeams() {
 
 /* ── Resets ── */
 function resetCore() {
-  [['c_eng',5],['c_cost',140000],['c_fire_hrs',8],['c_infra_hrs',6],['c_compute',15000],['c_incidents',8],
+  [['c_eng',5],['c_cost',140000],['c_fire_hrs',2],['c_infra_hrs',1],['c_compute',15000],['c_incidents',8],
    ['c_load',1.25],['c_weeks',50],['c_waste_pct',0],['c_downtime_mult',3]]
     .forEach(([id,val]) => document.getElementById(id).value = val);
   calcCore();
