@@ -272,7 +272,7 @@ body {
           </div>
         </div>
         <div class="field">
-          <label>Avg hrs/week per engineer on pipeline fires</label>
+          <label>Avg hrs/week per engineer on pipeline maintenance</label>
           <div class="field-input-row">
             <input type="number" id="c_fire_hrs" value="2" min="0" oninput="calcCore()">
             <span class="field-sfx">hrs/wk</span>
@@ -637,14 +637,14 @@ function setPlan(type) {
     document.getElementById('adv-included-seats-label').textContent = 'Legacy Teams: included seats';
     document.getElementById('adv-overage-label').textContent = 'Legacy Teams: overage / seat / mo';
     document.getElementById('t_included_seats').value = 5;
-    document.getElementById('t_overage_rate').value = 50;
+    document.getElementById('t_overage_rate').value = 100;
   }
   calcTeams();
 }
 
 function calcTeams() {
   const included    = currentMode === 'advanced' ? v('t_included_seats') : (planType === 'starter' ? 8 : 5);
-  const overageRate = currentMode === 'advanced' ? v('t_overage_rate')   : (planType === 'starter' ? 100 : 50);
+  const overageRate = currentMode === 'advanced' ? v('t_overage_rate')   : (planType === 'starter' ? 100 : 100);
 
   const extraSeats  = Math.max(v('t_seats') - included, 0);
   const overageCost = extraSeats * overageRate * 12;
