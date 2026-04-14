@@ -97,6 +97,67 @@ body {
   align-items: center;
   gap: 1rem;
 }
+.info-btn {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: transparent;
+  color: rgba(255,255,255,0.4);
+  font-size: 11px; font-weight: 600; font-family: inherit;
+  cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.15s, color 0.15s;
+  align-self: flex-start; margin-top: 2px;
+}
+.info-btn:hover { border-color: rgba(255,255,255,0.5); color: rgba(255,255,255,0.8); }
+
+/* ── INFO MODAL ── */
+#info-modal {
+  display: none;
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(0,0,0,0.5);
+  align-items: center; justify-content: center;
+  padding: 1.25rem;
+}
+#info-modal.open { display: flex; }
+.modal-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 100%; max-width: 480px;
+  max-height: 80vh; overflow-y: auto;
+}
+.modal-title {
+  font-size: 15px; font-weight: 600; color: #1a1916;
+  letter-spacing: -0.01em; margin-bottom: 1.25rem;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.modal-close {
+  background: none; border: none; cursor: pointer;
+  font-size: 18px; color: #9a9890; line-height: 1;
+  padding: 0; transition: color 0.1s;
+}
+.modal-close:hover { color: #1a1916; }
+.modal-section { margin-bottom: 1.25rem; }
+.modal-section:last-child { margin-bottom: 0; }
+.modal-section-title {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #aaa8a0; margin-bottom: 0.6rem;
+}
+.modal-row {
+  display: flex; gap: 0.75rem;
+  font-size: 13px; line-height: 1.5; margin-bottom: 0.5rem;
+  align-items: baseline;
+}
+.modal-field {
+  font-weight: 500; color: #1a1916; min-width: 160px; flex-shrink: 0;
+}
+.modal-desc { color: #6a6860; }
+.modal-formula {
+  font-size: 12px; color: #7a7870; background: #f5f4f1;
+  border-radius: 6px; padding: 10px 12px; margin-top: 0.75rem;
+  line-height: 1.7;
+}
+.modal-formula strong { color: #3a3830; }
 .result-label { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.4); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 4px; }
 .result-total { font-size: 34px; font-weight: 600; color: #fff; letter-spacing: -0.03em; line-height: 1; }
 .result-mo { font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 4px; }
@@ -249,7 +310,21 @@ body {
       <div class="result-total" id="r_total">$0</div>
       <div class="result-mo" id="r_mo">$0 / month</div>
     </div>
-    <div class="result-right" id="r_breakdown"></div>
+    <div style="display:flex;align-items:flex-start;gap:10px;flex-shrink:0;">
+      <div class="result-right" id="r_breakdown"></div>
+      <button class="info-btn" onclick="openInfo()" title="How is this calculated?">i</button>
+    </div>
+  </div>
+
+  <!-- Info modal -->
+  <div id="info-modal" onclick="if(event.target===this)closeInfo()">
+    <div class="modal-card">
+      <div class="modal-title">
+        <span id="modal-title-text">How this is calculated</span>
+        <button class="modal-close" onclick="closeInfo()">×</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
   </div>
 
   <!-- ══ dbt Core ══ -->
@@ -694,6 +769,112 @@ function resetTeams() {
 }
 
 calcCore();
+
+/* ── Info modal ── */
+const INFO = {
+  core: {
+    title: 'dbt Core — how this is calculated',
+    sections: [
+      {
+        heading: 'Eng time lost',
+        rows: [
+          { field: 'Engineers on team',         desc: 'Headcount multiplier — more engineers means more total time wasted.' },
+          { field: 'Avg salary / yr',            desc: 'Sets the loaded hourly rate (salary × load multiplier ÷ working hours).' },
+          { field: 'Pipeline maintenance hrs',   desc: 'Avg hours per engineer per week spent on reactive maintenance work.' },
+          { field: 'Infra & CI hrs',             desc: 'Avg hours per engineer per week managing infrastructure and CI manually.' },
+        ],
+        formula: '<strong>Eng time lost</strong> = (maintenance hrs + infra hrs) × engineers × working weeks × hourly rate'
+      },
+      {
+        heading: 'Compute waste',
+        rows: [
+          { field: 'Monthly warehouse spend',   desc: 'Your current monthly spend on compute (Snowflake, Databricks, BigQuery, etc.).' },
+          { field: 'Compute waste % (advanced)', desc: 'Estimated % of spend wasted on unnecessary full rebuilds. Defaults to 0% — adjust in Advanced mode.' },
+        ],
+        formula: '<strong>Compute waste</strong> = monthly spend × 12 months × waste %<br><em>Note: all figures are annualized.</em>'
+      },
+      {
+        heading: 'Downtime cost',
+        rows: [
+          { field: 'Stakeholder downtime hrs/mo', desc: 'Hours per month of data being broken or unavailable to business users.' },
+          { field: 'Downtime multiplier (advanced)', desc: 'Multiplier on the hourly rate to account for fix time and downstream business impact. Defaults to 3×.' },
+        ],
+        formula: '<strong>Downtime cost</strong> = downtime hrs/mo × 12 months × hourly rate × downtime multiplier'
+      }
+    ]
+  },
+  sproc: {
+    title: 'Stored Procs — how this is calculated',
+    sections: [
+      {
+        heading: 'Maintenance labor',
+        rows: [
+          { field: 'Engineers maintaining transformations', desc: 'Headcount multiplier for total labor cost.' },
+          { field: 'Avg salary / yr',                       desc: 'Sets the loaded hourly rate.' },
+          { field: 'Debug / update hrs per engineer',       desc: 'Avg hours per engineer per week spent debugging or modifying stored procedures.' },
+        ],
+        formula: '<strong>Maintenance labor</strong> = debug hrs × engineers × working weeks × hourly rate'
+      },
+      {
+        heading: 'Compute waste',
+        rows: [
+          { field: 'Monthly warehouse spend', desc: 'Your current monthly compute spend.' },
+          { field: 'Compute waste % (advanced)', desc: 'Stored procs rebuild full tables on every run with no incremental support. Defaults to 25%.' },
+        ],
+        formula: '<strong>Compute waste</strong> = monthly spend × 12 months × waste %'
+      },
+      {
+        heading: 'Schema breakage',
+        rows: [
+          { field: 'Schema breaks per quarter', desc: 'How often upstream source schema changes break your stored procedures.' },
+          { field: 'Cost per break (advanced)',  desc: 'Estimated cost to trace, fix, and re-validate each breakage. Defaults to $12,000 (~2 eng days).' },
+        ],
+        formula: '<strong>Schema breakage</strong> = breaks per quarter × 4 quarters × cost per break'
+      }
+    ]
+  },
+  teams: {
+    title: 'Teams / Starter — how this is calculated',
+    sections: [
+      {
+        heading: 'Seat overages',
+        rows: [
+          { field: 'Developer seats in use', desc: 'Total seats your team is currently using.' },
+          { field: 'Included seats (advanced)', desc: 'Seats included in your plan before overages kick in. Starter: 8, Legacy Teams: 5.' },
+          { field: 'Overage rate (advanced)',   desc: 'Cost per seat per month beyond the included amount. Both plans: $100/seat/mo.' },
+        ],
+        formula: '<strong>Seat overages</strong> = max(seats − included, 0) × overage rate × 12 months'
+      },
+      {
+        heading: 'Build overages (Starter only)',
+        rows: [
+          { field: 'Model builds per month', desc: 'How many model builds your team runs per month across all jobs.' },
+          { field: 'Included builds (advanced)', desc: 'Build runs included in Starter before overages. Defaults to 15,000/mo.' },
+          { field: 'Overage per build (advanced)', desc: 'Cost per build run beyond the included amount. Defaults to $0.01.' },
+        ],
+        formula: '<strong>Build overages</strong> = max(monthly builds − 15,000, 0) × $0.01 × 12 months'
+      }
+    ]
+  }
+};
+
+function openInfo() {
+  const active = document.querySelector('.panel.active');
+  const key = active ? active.id.replace('panel-', '') : 'core';
+  const data = INFO[key];
+  document.getElementById('modal-title-text').textContent = data.title;
+  document.getElementById('modal-body').innerHTML = data.sections.map(s => `
+    <div class="modal-section">
+      <div class="modal-section-title">${s.heading}</div>
+      ${s.rows.map(r => `<div class="modal-row"><span class="modal-field">${r.field}</span><span class="modal-desc">${r.desc}</span></div>`).join('')}
+      <div class="modal-formula">${s.formula}</div>
+    </div>
+  `).join('');
+  document.getElementById('info-modal').classList.add('open');
+}
+function closeInfo() {
+  document.getElementById('info-modal').classList.remove('open');
+}
 </script>
 
 <footer style="position:fixed;bottom:0;left:0;right:0;padding:6px 1.25rem;display:flex;align-items:center;justify-content:space-between;font-family:'Inter',system-ui,sans-serif;font-size:11px;color:#b0ada6;">
